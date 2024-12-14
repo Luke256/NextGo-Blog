@@ -1,8 +1,7 @@
 import Image from "next/image";
 
 export default function Home() {
-
-  const message = fetch("http://localhost:8080/hello", { cache: "no-store" })
+  const message = fetch(process.env.BACKEND_URL+"/hello", { cache: "no-store" })
     .then((response) => response.text())
 
   return (

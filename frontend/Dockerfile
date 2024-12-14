@@ -19,5 +19,8 @@ RUN npm run build
 # ポート番号を指定
 EXPOSE 3000
 
+# 環境変数を切り替え
+COPY .env.production .env
+
 # アプリケーションを起動
 CMD ["npm","start"]
