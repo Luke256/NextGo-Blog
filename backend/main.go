@@ -11,11 +11,12 @@ func main() {
 	e := echo.New()
 
 	// 「/hello」というエンドポイントを設定する
-	e.GET("/hello", func(c echo.Context) error {
-		// HTTPステータスコードは200番で、文字列「Hello, World.」をクライアントに返す
-		return c.String(http.StatusOK, "Hello, World from Docker compose v2!\n")
-	})
+	e.GET("/hello", Hello)
 
 	// Webサーバーをポート番号8080で起動し、エラーが発生した場合はログにエラーメッセージを出力する
 	e.Logger.Fatal(e.Start(":8080"))
+}
+
+func Hello(c echo.Context) error {
+	return c.String(http.StatusOK, "Hello, World from Docker compose v2!\n")
 }
