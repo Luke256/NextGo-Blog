@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   const message = fetch(process.env.BACKEND_URL+"/hello", { cache: "no-store" })
@@ -14,6 +15,7 @@ export default function Home() {
         height={16}
       />
       <p>{message}</p>
+      <Link href="/login">Login</Link>
     </div>
   );
 }
