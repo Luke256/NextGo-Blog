@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -14,6 +15,11 @@ type jwtCustomClaims struct {
 	Admin bool   `json:"admin"`
 	jwt.RegisteredClaims
 }
+
+const (
+	// Key used for JWT_SECRET_KEY generation
+	JWT_SECRET_KEY = "SECRET_KEY"
+)
 
 func main() {
 	// Echoの新しいインスタンスを作成
@@ -32,9 +38,10 @@ func main() {
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(jwtCustomClaims)
 		},
-		SigningKey: []byte("secret"),
+		SigningKey: []byte(JWT_SECRET_KEY),
 	}
 	private.Use(echojwt.WithConfig(config))
+	private.GET("", privateHello)
 
 	// Webサーバーをポート番号8080で起動し、エラーが発生した場合はログにエラーメッセージを出力する
 	e.Logger.Fatal(e.Start(":8080"))
@@ -54,9 +61,34 @@ func login(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
-	if username == "user" && password == "password" {
-		return c.String(http.StatusOK, "Login success!\n")
-	} else {
-		return c.String(http.StatusUnauthorized, "Login failed!\n")
+	if username != "user" || password != "password" {
+		return echo.ErrUnauthorized
 	}
+
+	claims := &jwtCustomClaims{
+		"Luke Skywalker",
+		true,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	
+	// Generate encoded token and send it as response.
+	t, err := token.SignedString([]byte(JWT_SECRET_KEY))
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"token": t,
+	})
+}
+
+func privateHello(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*jwtCustomClaims)
+
+	return c.String(http.StatusOK, "Welcome, "+claims.Name+"!\n")
 }
