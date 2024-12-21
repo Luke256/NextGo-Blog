@@ -2,23 +2,16 @@ package main
 
 import (
 	"net/http"
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
-	echojwt "github.com/labstack/echo-jwt/v4"
+	"fmt"
+	
+    "github.com/gorilla/sessions"
+    "github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
-type jwtCustomClaims struct {
-	Name  string `json:"name"`
-	Admin bool   `json:"admin"`
-	jwt.RegisteredClaims
-}
-
 const (
-	// Key used for JWT_SECRET_KEY generation
-	JWT_SECRET_KEY = "SECRET_KEY"
+	SECRET_KEY = "SECRET_KEY"
 )
 
 func main() {
@@ -27,21 +20,25 @@ func main() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(SECRET_KEY))))
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept },
+	}))
 
 	e.GET("/hello", hello)
 	e.GET("/hello/:name", helloByName)
+	e.GET("/create-session",createSession)
 
-	e.POST("/login", login)
-
-	private := e.Group("/private")
-	config := echojwt.Config{
-		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return new(jwtCustomClaims)
-		},
-		SigningKey: []byte(JWT_SECRET_KEY),
-	}
-	private.Use(echojwt.WithConfig(config))
-	private.GET("", privateHello)
+	
+	
+	sess := e.Group("/sess")
+	sess.Use(readSessionMiddleware)
+	sess.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept },
+	}))
+	sess.GET("/read-session", readSession)
 
 	// Webサーバーをポート番号8080で起動し、エラーが発生した場合はログにエラーメッセージを出力する
 	e.Logger.Fatal(e.Start(":8080"))
@@ -57,38 +54,41 @@ func helloByName(c echo.Context) error {
 	return c.String(http.StatusOK, "Hello, "+name+"!\n")
 }
 
-func login(c echo.Context) error {
-	username := c.FormValue("username")
-	password := c.FormValue("password")
-
-	if username != "user" || password != "password" {
-		return echo.ErrUnauthorized
-	}
-
-	claims := &jwtCustomClaims{
-		"Luke Skywalker",
-		true,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	
-	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte(JWT_SECRET_KEY))
+func createSession(c echo.Context) error {
+	sess, err := session.Get("session", c)
 	if err != nil {
 		return err
 	}
-
-	return c.JSON(http.StatusOK, echo.Map{
-		"token": t,
-	})
+	sess.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   10000000,
+		HttpOnly: true,
+	}
+	sess.Values["foo"] = "bar"
+	sess.Values["name"] = "Luke"
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		return err
+	}
+	return c.NoContent(http.StatusOK)
 }
 
-func privateHello(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*jwtCustomClaims)
+func readSession(c echo.Context) error {
+	sess, err := session.Get("session", c)
+	if err != nil {
+		return err
+	}
+	return c.String(http.StatusOK, fmt.Sprintf("foo=%v\n", sess.Values["foo"]))
+}
 
-	return c.String(http.StatusOK, "Welcome, "+claims.Name+"!\n")
+func readSessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		sess, err := session.Get("session", c)
+		if err != nil {
+			return err
+		}
+		if sess.Values["foo"] == nil {
+			return c.String(http.StatusUnauthorized, "foo is not set")
+		}
+		return next(c)
+	}
 }
