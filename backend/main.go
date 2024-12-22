@@ -20,24 +20,26 @@ func main() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(SECRET_KEY))))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:3000"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept },
+		AllowHeaders: []string{
+			echo.HeaderOrigin, 
+			echo.HeaderContentType, 
+			echo.HeaderAccept,
+			echo.HeaderAccessControlAllowOrigin,
+			echo.HeaderAccessControlAllowCredentials,
+		},
+		AllowCredentials: true,
 	}))
 
 	e.GET("/hello", hello)
 	e.GET("/hello/:name", helloByName)
 	e.GET("/create-session",createSession)
-
-	
 	
 	sess := e.Group("/sess")
 	sess.Use(readSessionMiddleware)
-	sess.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:3000"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept },
-	}))
 	sess.GET("/read-session", readSession)
 
 	// Webサーバーをポート番号8080で起動し、エラーが発生した場合はログにエラーメッセージを出力する
@@ -87,7 +89,7 @@ func readSessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return err
 		}
 		if sess.Values["foo"] == nil {
-			return c.String(http.StatusUnauthorized, "foo is not set")
+			return c.String(http.StatusUnauthorized, "invalid session")
 		}
 		return next(c)
 	}
