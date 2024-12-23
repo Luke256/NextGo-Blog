@@ -16,8 +16,15 @@ const (
 
 func main() {
 	// Echoの新しいインスタンスを作成
-	e := echo.New()
+	e := setup()
 
+
+	// Webサーバーをポート番号8080で起動し、エラーが発生した場合はログにエラーメッセージを出力する
+	e.Logger.Fatal(e.Start(":8080"))
+}
+
+func setup() *echo.Echo{
+	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
@@ -41,9 +48,7 @@ func main() {
 	sess := e.Group("/sess")
 	sess.Use(readSessionMiddleware)
 	sess.GET("/read-session", readSession)
-
-	// Webサーバーをポート番号8080で起動し、エラーが発生した場合はログにエラーメッセージを出力する
-	e.Logger.Fatal(e.Start(":8080"))
+	return e
 }
 
 func hello(c echo.Context) error {
