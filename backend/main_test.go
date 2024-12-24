@@ -2,10 +2,10 @@ package main
 
 import (
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -54,30 +54,58 @@ func TestHelloWithName(t *testing.T) {
 
 func TestCreateSession(t *testing.T) {
 	e := setup()
+	
+	server := httptest.NewServer(e)
+	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/create-session", nil)
-	rec := httptest.NewRecorder()
-
-	c := e.NewContext(req, rec)
-	c.Set("_session_store", sessions.NewCookieStore([]byte(SECRET_KEY)))
-
-	if assert.NoError(t, createSession(c)) {
-		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "", rec.Body.String())
+	r, err := http.Get(server.URL + "/create-session")
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	assert.Equal(t, http.StatusOK, r.StatusCode)
 }
 
 func TestReadSessionWithoutSession(t *testing.T) {
 	e := setup()
+	server := httptest.NewServer(e)
+	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/sess/read-session", nil)
-	rec := httptest.NewRecorder()
-
-	c := e.NewContext(req, rec)
-	c.Set("_session_store", sessions.NewCookieStore([]byte(SECRET_KEY)))
-
-	if assert.NoError(t, readSession(c)) {
-		assert.Equal(t, http.StatusUnauthorized, rec.Code)
-		assert.Equal(t, "invalid session", rec.Body.String())
+	r, err := http.Get(server.URL + "/sess/read-session")
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	assert.Equal(t, http.StatusUnauthorized, r.StatusCode)
+}
+
+func TestReadSessionWithSession(t *testing.T) {
+	e := setup()
+	server := httptest.NewServer(e)
+	defer server.Close()
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	c := http.Client{Jar: jar}
+	r, err := c.Get(server.URL + "/create-session")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, http.StatusOK, r.StatusCode)
+
+	r, err = c.Get(server.URL + "/sess/read-session")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, http.StatusOK, r.StatusCode)
+	assert.Equal(t, "foo=bar\n", readBody(r))
+}
+
+func readBody(r *http.Response) string {
+	buf := make([]byte, 1024)
+	n, _ := r.Body.Read(buf)
+	return string(buf[:n])
 }
