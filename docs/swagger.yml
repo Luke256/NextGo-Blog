@@ -1,0 +1,78 @@
+openapi: 3.0.3
+info:
+  title: My API
+  version: 1.0.0
+  description: "サンプルAPI"
+servers:
+  - url: http://localhost:8080
+    description: "ローカル"
+paths:
+  /hello:
+    get:
+      summary: "Say hello"
+      description: "挨拶を返すAPIです"
+      tags: [ "Hello" ]
+      deprecated: false
+      responses:
+        '200':
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/hello"
+  /hello/{Name}:
+    get:
+      summary: "Say hello to someone"
+      description: "挨拶を返すAPIです"
+      tags: [ "Hello" ]
+      deprecated: false
+      parameters:
+        - name: Name
+          in: path
+          description: "挨拶する相手の名前"
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/hello"
+  /create-session:
+    get:
+      summary: "Create session"
+      description: "セッションを作成するAPIです"
+      tags: [ "Session" ]
+      deprecated: false
+      responses:
+        '200':
+          description: "成功"
+  /sess/read-session:
+    get:
+      summary: "Read session"
+      description: "セッションを読み込むAPIです"
+      tags: [ "Session" ]
+      deprecated: false
+      responses:
+        '200':
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/read-session"
+        '401':
+          description: "Unauthorized"
+
+  
+components:
+  schemas:
+    hello:
+      type: object
+      properties:
+        message:
+          type: string
+    read-session:
+      type: string
+      
