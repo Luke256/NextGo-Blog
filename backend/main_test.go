@@ -12,7 +12,7 @@ import (
 func TestHello(t *testing.T) {
 	e := setup()
 
-	req := httptest.NewRequest(http.MethodGet, "/hello", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/hello", nil)
 	rec := httptest.NewRecorder()
 
 	c := e.NewContext(req, rec)
@@ -36,7 +36,7 @@ func TestHelloWithName(t *testing.T) {
 	}
 
 	for _, target := range targets {
-		req := httptest.NewRequest(http.MethodGet, "/hello/"+target.name, nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/hello/"+target.name, nil)
 		rec := httptest.NewRecorder()
 
 		c := e.NewContext(req, rec)
@@ -58,7 +58,7 @@ func TestCreateSession(t *testing.T) {
 	server := httptest.NewServer(e)
 	defer server.Close()
 
-	r, err := http.Get(server.URL + "/create-session")
+	r, err := http.Get(server.URL + "/api/create-session")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func TestReadSessionWithoutSession(t *testing.T) {
 	server := httptest.NewServer(e)
 	defer server.Close()
 
-	r, err := http.Get(server.URL + "/sess/read-session")
+	r, err := http.Get(server.URL + "/api/sess/read-session")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,13 +90,13 @@ func TestReadSessionWithSession(t *testing.T) {
 	}
 
 	c := http.Client{Jar: jar}
-	r, err := c.Get(server.URL + "/create-session")
+	r, err := c.Get(server.URL + "/api/create-session")
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 
-	r, err = c.Get(server.URL + "/sess/read-session")
+	r, err = c.Get(server.URL + "/api/sess/read-session")
 	if err != nil {
 		t.Fatal(err)
 	}
