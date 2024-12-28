@@ -1,26 +1,36 @@
-# ベースイメージを指定
-FROM node:20.17.0
+# ベースイメージを定義
+FROM node:20-alpine AS base
 
-# 作業ディレクトリを設定
 WORKDIR /app
 
-# キャッシュ利用で効率化するために別でコピー
+# package.jsonとlockファイルをコピーして依存関係をインストール（キャッシュ活用）
 COPY package.json package-lock.json ./
+RUN npm install --only=production
 
-# ソースコードをコピー
-COPY . .
+# Development Stage
+FROM base AS development
 
-# 依存関係をインストール
+# 開発用に全依存関係をインストール
 RUN npm install
 
-# アプリケーションをビルド
+COPY . ./
+
+# 開発用のコマンド
+CMD ["npm", "run", "dev"]
+
+# Production Stage
+FROM base AS production
+
+COPY . ./
+
+# ビルドを実行（本番用）
 RUN npm run build
 
-# ポート番号を指定
-EXPOSE 3000
-
-# 環境変数を切り替え
+# 本番用設定を適用
 COPY .env.production .env
 
-# アプリケーションを起動
-CMD ["npm","start"]
+# 必要なポートを公開
+EXPOSE 3000
+
+# 本番用のコマンド
+CMD ["npm", "start"]

@@ -16,6 +16,8 @@ export default function Home() {
       />
       <p>{message}</p>
       <Link href="/login">Login</Link>
+      <br />
+      <Link href="/hoge">Hoge</Link>
     </div>
   );
 }

@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: ./backend/
-      dockerfile: Dockerfile.dev
+      target: development
     ports:
       - 8080:8080
     volumes:
@@ -10,7 +10,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      target: development
     ports:
       - 3000:3000
     environment:

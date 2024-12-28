@@ -1,20 +1,44 @@
-# ベースイメージを指定
-FROM golang:latest
+# Development Stage
+FROM golang:1.23-alpine AS development
 
-# コンテナ内の作業ディレクトリを設定
 WORKDIR /app
 
-# ローカルのソースコードをコンテナにコピー
-COPY . .
+# 必要なツールをインストール
+RUN go install github.com/air-verse/air@latest
 
-# 必要なパッケージをインストール
+# モジュールファイルをコピーして依存関係を準備
+COPY go.mod go.sum ./
+RUN go mod tidy
+
+# ソースコードをコピー
+COPY . ./
+
+# 開発用のコマンド
+CMD ["air"]
+
+# Build Stage
+FROM golang:1.23-alpine AS build
+
+WORKDIR /app
+
+# モジュールファイルをコピーして依存関係を準備
+COPY go.mod go.sum ./
 RUN go mod download
 
-# アプリケーションをビルド
+# ソースコードをコピーしてビルド
+COPY . ./
 RUN go build -o main .
 
-# 公開予定のコンテナのポートを明示
+# Production Stage
+FROM alpine:latest AS production
+
+WORKDIR /app
+
+# 必要な実行ファイルだけをコピー
+COPY --from=build /app/main .
+
+# 必要なポートを公開
 EXPOSE 8080
 
-# アプリケーションを実行
+# 本番用のコマンド
 CMD ["./main"]
