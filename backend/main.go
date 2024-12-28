@@ -27,7 +27,7 @@ func setup() *echo.Echo{
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-
+	
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(SECRET_KEY))))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:3000"},
@@ -40,12 +40,13 @@ func setup() *echo.Echo{
 		},
 		AllowCredentials: true,
 	}))
-
-	e.GET("/hello", hello)
-	e.GET("/hello/:name", helloByName)
-	e.GET("/create-session",createSession)
 	
-	sess := e.Group("/sess")
+	api := e.Group("/api")
+	api.GET("/hello", hello)
+	api.GET("/hello/:name", helloByName)
+	api.GET("/create-session",createSession)
+	
+	sess := api.Group("/sess")
 	sess.Use(readSessionMiddleware)
 	sess.GET("/read-session", readSession)
 	return e
