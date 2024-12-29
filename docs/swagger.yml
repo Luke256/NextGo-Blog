@@ -49,7 +49,7 @@ paths:
       responses:
         '200':
           description: "成功"
-  /sess/read-session:
+  /user/read-session:
     get:
       summary: "Read session"
       description: "セッションを読み込むAPIです"

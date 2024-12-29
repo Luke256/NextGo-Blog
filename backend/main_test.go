@@ -96,7 +96,7 @@ func TestReadSessionWithSession(t *testing.T) {
 	}
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 
-	r, err = c.Get(server.URL + "/api/sess/read-session")
+	r, err = c.Get(server.URL + "/api/user/read-session")
 	if err != nil {
 		t.Fatal(err)
 	}

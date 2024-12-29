@@ -46,7 +46,7 @@ func setup() *echo.Echo{
 	api.GET("/hello/:name", helloByName)
 	api.GET("/create-session",createSession)
 	
-	sess := api.Group("/sess")
+	sess := api.Group("/user")
 	sess.Use(readSessionMiddleware)
 	sess.GET("/read-session", readSession)
 	return e
