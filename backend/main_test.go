@@ -71,7 +71,7 @@ func TestReadSessionWithoutSession(t *testing.T) {
 	server := httptest.NewServer(e)
 	defer server.Close()
 
-	r, err := http.Get(server.URL + "/api/sess/read-session")
+	r, err := http.Get(server.URL + "/api/user/read-session")
 	if err != nil {
 		t.Fatal(err)
 	}
