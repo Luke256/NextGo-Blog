@@ -1,11 +1,11 @@
 package main
 
 import (
-	"net/http"
 	"fmt"
-	
-    "github.com/gorilla/sessions"
-    "github.com/labstack/echo-contrib/session"
+	"net/http"
+
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -16,36 +16,35 @@ const (
 
 func main() {
 	// Echoの新しいインスタンスを作成
-	e := setup()
-
+	e := setupEcho()
 
 	// Webサーバーをポート番号8080で起動し、エラーが発生した場合はログにエラーメッセージを出力する
 	e.Logger.Fatal(e.Start(":8080"))
 }
 
-func setup() *echo.Echo{
+func setupEcho() *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	
+
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(SECRET_KEY))))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:3000"},
 		AllowHeaders: []string{
-			echo.HeaderOrigin, 
-			echo.HeaderContentType, 
+			echo.HeaderOrigin,
+			echo.HeaderContentType,
 			echo.HeaderAccept,
 			echo.HeaderAccessControlAllowOrigin,
 			echo.HeaderAccessControlAllowCredentials,
 		},
 		AllowCredentials: true,
 	}))
-	
+
 	api := e.Group("/api")
 	api.GET("/hello", hello)
 	api.GET("/hello/:name", helloByName)
-	api.GET("/create-session",createSession)
-	
+	api.GET("/create-session", createSession)
+
 	sess := api.Group("/user")
 	sess.Use(readSessionMiddleware)
 	sess.GET("/read-session", readSession)

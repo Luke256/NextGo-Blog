@@ -10,7 +10,7 @@ import (
 )
 
 func TestHello(t *testing.T) {
-	e := setup()
+	e := setupEcho()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/hello", nil)
 	rec := httptest.NewRecorder()
@@ -24,7 +24,7 @@ func TestHello(t *testing.T) {
 }
 
 func TestHelloWithName(t *testing.T) {
-	e := setup()
+	e := setupEcho()
 
 	targets := []struct {
 		name string
@@ -51,10 +51,9 @@ func TestHelloWithName(t *testing.T) {
 	}
 }
 
-
 func TestCreateSession(t *testing.T) {
-	e := setup()
-	
+	e := setupEcho()
+
 	server := httptest.NewServer(e)
 	defer server.Close()
 
@@ -67,7 +66,7 @@ func TestCreateSession(t *testing.T) {
 }
 
 func TestReadSessionWithoutSession(t *testing.T) {
-	e := setup()
+	e := setupEcho()
 	server := httptest.NewServer(e)
 	defer server.Close()
 
@@ -80,7 +79,7 @@ func TestReadSessionWithoutSession(t *testing.T) {
 }
 
 func TestReadSessionWithSession(t *testing.T) {
-	e := setup()
+	e := setupEcho()
 	server := httptest.NewServer(e)
 	defer server.Close()
 
