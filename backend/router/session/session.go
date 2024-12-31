@@ -100,7 +100,7 @@ func (s *session) Expired() bool {
 	return time.Since(s.createdAt) > time.Duration(sessionMaxAge)*time.Second
 }
 
-func newSessionStore(db *gorm.DB) Store {
+func NewSessionStore(db *gorm.DB) Store {
 	return &sessionStore{db: db}
 }
 

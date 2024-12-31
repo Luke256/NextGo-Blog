@@ -9,18 +9,26 @@ on:
 jobs:
   test:
     name: TestBackend
+    # create docker compose, run tests, and clean up
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: Set up Docker Compose
+        uses: docker/compose-cli:1
         with:
-          go-version-file: ./backend/go.mod
+          compose-version: 2
+
+      - name: Build and run services
+        run: |
+          docker compose -f compose.dev.yml -f docker-compose.dev.yml up -d
+          docker compose -f compose.dev.yml -f docker-compose.dev.yml ps
 
       - name: Run tests
         run: |
-          cd backend
-          go test ./...
+          docker compose -f compose.dev.yml -f docker-compose.dev.yml exec backend go test ./...
         
+      - name: Clean up
+        run: |
+          docker compose -f compose.dev.yml -f docker-compose.dev.yml down
