@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"nextgoBlog/cmd"
+	v1 "nextgoBlog/router/v1"
 	"testing"
 
 	"github.com/labstack/echo/v4"
@@ -29,12 +31,15 @@ func TestHello(t *testing.T) {
 		assert.Equal(t, http.StatusOK, r.StatusCode)
 	}
 
-	// expected: {"Hello, World from Docker compose v2!\n"}
-
+	// expected: json data like {"message":"Hello, World from Docker compose v2!"}
+	
 	body := make([]byte, 1024)
 	n, _ := r.Body.Read(body)
+	actual := ByteToMessage(body[:n])
 
-	assert.Equal(t, "\"Hello, World from Docker compose v2!\"\n", string(body[:n]))
+	expct := v1.Message{Message: "Hello, World from Docker compose v2!"}
+	
+	assert.Equal(t, expct, actual)
 }
 
 func TestHelloName(t *testing.T) {
@@ -44,10 +49,10 @@ func TestHelloName(t *testing.T) {
 	targets := []struct {
 		name string
 		code int
-		body string
+		body v1.Message
 	}{
-		{"Alice", http.StatusOK, "\"Hello, Alice!\"\n"},
-		{"Bob", http.StatusOK, "\"Hello, Bob!\"\n"},
+		{"Alice", http.StatusOK, v1.Message{Message: "Hello, Alice!"}},
+		{"Bob", http.StatusOK, v1.Message{Message: "Hello, Bob!"}},
 	}
 
 	for _, target := range targets {
@@ -62,12 +67,17 @@ func TestHelloName(t *testing.T) {
 
 		body := make([]byte, 1024)
 		n, _ := r.Body.Read(body)
-		if string(body[:n]) != target.body {
-			assert.Equal(t, target.body, string(body[:n]))
-		}
+		actual := ByteToMessage(body[:n])
+
+		assert.Equal(t, target.body, actual)
 	}
 }
 
+func ByteToMessage(b []byte) v1.Message {
+	var m v1.Message
+	json.Unmarshal(b, &m)
+	return m
+}
 
 // import (
 // 	"net/http"

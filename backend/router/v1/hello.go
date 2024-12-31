@@ -6,7 +6,11 @@ import (
 
 func (h *Handler) Hello(c echo.Context) error {
 
-	res := h.Repo.Hello()
+	msg := h.Repo.Hello()
+
+	res := Message {
+		Message: msg,
+	}
 
 	return c.JSON(200, res)
 }
@@ -14,7 +18,11 @@ func (h *Handler) Hello(c echo.Context) error {
 func (h *Handler) HelloName(c echo.Context) error {
 	name := c.Param("name")
 
-	res := h.Repo.HelloName(name)
+	msg := h.Repo.HelloName(name)
+
+	res := Message {
+		Message: msg,
+	}
 
 	return c.JSON(200, res)
 }
