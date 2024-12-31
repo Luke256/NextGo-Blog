@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Checkout And Build
-        run: docker compose -f compose.dev.yml up -d
+        run: docker compose -f compose.test.yml up -d
 
       - name: Test
-        run: docker compose -f compose.dev.yml exec backend go test -v -coverpkg=./... ./...
+        run: docker compose -f compose.test.yml exec backend go test -v -coverpkg=./... ./...

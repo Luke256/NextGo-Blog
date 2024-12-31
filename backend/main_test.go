@@ -33,9 +33,8 @@ func TestHello(t *testing.T) {
 
 	body := make([]byte, 1024)
 	n, _ := r.Body.Read(body)
-	if string(body[:n]) != "Hello, World from Docker compose v2!\n" {
-		assert.Equal(t, "Hello, World from Docker compose v2!\n", string(body[:n]))
-	}
+
+	assert.Equal(t, "\"Hello, World from Docker compose v2!\\n\"", string(body[:n]))
 }
 
 func TestHelloName(t *testing.T) {
@@ -47,8 +46,8 @@ func TestHelloName(t *testing.T) {
 		code int
 		body string
 	}{
-		{"Alice", http.StatusOK, "Hello, Alice!\n"},
-		{"Bob", http.StatusOK, "Hello, Bob!\n"},
+		{"Alice", http.StatusOK, "\"Hello, Alice!\\n\""},
+		{"Bob", http.StatusOK, "\"Hello, Bob!\\n\""},
 	}
 
 	for _, target := range targets {
@@ -68,6 +67,7 @@ func TestHelloName(t *testing.T) {
 		}
 	}
 }
+
 
 // import (
 // 	"net/http"

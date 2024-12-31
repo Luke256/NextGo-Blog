@@ -1,0 +1,18 @@
+services:
+  backend:
+    build:
+      context: ./backend/
+      target: development
+    ports:
+      - 8080:8080
+    volumes:
+      - ./backend:/app
+  db:
+    image: mysql:8.4
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mydb
+    volumes:
+      - ./db:/var/lib/mysql
