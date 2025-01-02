@@ -12,19 +12,18 @@ import (
 
 const (
 	sessionCookieName = "r_session"
-	sessionMaxAge = 60 * 60 * 24 * 7
+	sessionMaxAge     = 60 * 60 * 24 * 7
 )
 
 type session struct {
-	token string
-	userID string
+	token     string
+	userID    string
 	createdAt time.Time
 
-	db *gorm.DB
+	db   *gorm.DB
 	data map[string]interface{}
 	sync.Mutex
 }
-
 
 type Session interface {
 	Token() string
@@ -47,29 +46,29 @@ type Store interface {
 	GetSession(c echo.Context) (Session, error)
 	GetSessionByToken(token string) (Session, error)
 	GetSessionsByUserID(userID string) ([]Session, error)
-	IssueSession(userID string) (Session, error)
+	IssueSession(userID string, data map[string]interface{}) (Session, error)
 }
 
-func newSession(db *gorm.DB, token string, userID string, createdAt time.Time) *session {
+func newSession(db *gorm.DB, token string, userID string, createdAt time.Time, data map[string]interface{}) *session {
 	return &session{
-		token: token,
-		userID: userID,
+		token:     token,
+		userID:    userID,
 		createdAt: createdAt,
-		db: db,
-		data: make(map[string]interface{}),
+		db:        db,
+		data:      data,
 	}
 }
 
 func (s *session) Token() string {
-	return s.token;
+	return s.token
 }
 
 func (s *session) UserID() string {
-	return s.userID;
+	return s.userID
 }
 
 func (s *session) CreatedAt() time.Time {
-	return s.createdAt;
+	return s.createdAt
 }
 
 func (s *session) Get(key string) (interface{}, error) {
@@ -96,7 +95,7 @@ func (s *session) Delete(key string) error {
 }
 
 func (s *session) Expired() bool {
-	
+
 	return time.Since(s.createdAt) > time.Duration(sessionMaxAge)*time.Second
 }
 
@@ -116,13 +115,18 @@ func (ss *sessionStore) GetSession(c echo.Context) (Session, error) {
 
 func (ss *sessionStore) GetSessionByToken(token string) (Session, error) {
 	var r model.SessionRecord
-	
+
 	err := ss.db.First(&r, &model.SessionRecord{Token: token}).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return newSession(ss.db, r.Token, r.UserID, r.CreatedAt), nil
+	data, err := r.GetData()
+	if err != nil {
+		return nil, err
+	}
+
+	return newSession(ss.db, r.Token, r.UserID, r.CreatedAt, data), nil
 }
 
 func (ss *sessionStore) GetSessionsByUserID(userID string) ([]Session, error) {
@@ -134,24 +138,33 @@ func (ss *sessionStore) GetSessionsByUserID(userID string) ([]Session, error) {
 	}
 
 	sessions := make([]Session, len(rs))
-	for _, t := range rs {
-		sessions = append(sessions, newSession(ss.db, t.Token, t.UserID, t.CreatedAt))
+	for _, r := range rs {
+		data, err := r.GetData()
+		if err != nil {
+			return nil, err
+		}
+		sessions = append(sessions, newSession(ss.db, r.Token, r.UserID, r.CreatedAt, data))
 	}
 
 	return sessions, nil
 }
 
-func (ss *sessionStore) IssueSession(userID string) (Session, error) {
-	r := model.SessionRecord {
-		Token: random.SecureAlphaNumeric(64),
-		UserID: userID,
+func (ss *sessionStore) IssueSession(userID string, data map[string]interface{}) (Session, error) {
+	r := model.SessionRecord{
+		Token:     random.SecureAlphaNumeric(64),
+		UserID:    userID,
 		CreatedAt: time.Now(),
 	}
+
+	if data == nil {
+		data = make(map[string]interface{})
+	}
+	r.SetData(data)
 
 	err := ss.db.Create(&r).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return newSession(ss.db, r.Token, r.UserID, r.CreatedAt), nil
+	return newSession(ss.db, r.Token, r.UserID, r.CreatedAt, data), nil
 }

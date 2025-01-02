@@ -74,5 +74,8 @@ components:
         message:
           type: string
     read-session:
-      type: string
+      type: object
+      properties:
+        foo:
+          type: string
       

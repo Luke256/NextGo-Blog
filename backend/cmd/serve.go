@@ -20,9 +20,7 @@ func NewServer(e *echo.Echo) *Server {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// DB接続
-	// MySQLのユーザー名:パスワードはroot:password、プロトコルはtcp(db:3306)、DB名はnextgo_blog
-
+	// DataBase
 	engine, err := gorm.Open(mysql.New(mysql.Config{
 		DSNConfig: &driverMySQL.Config{
 			User: "root",
@@ -36,11 +34,13 @@ func NewServer(e *echo.Echo) *Server {
 		e.Logger.Fatal(err)
 	}
 
+	// Repository
 	repo, init, err := gormRepo.NewGormRepository(engine, true)
 	if err != nil {
 		e.Logger.Fatal(err)
 	}
 
+	// Router
 	e = router.Setup(e, engine, repository.Repository(repo))
 
 	if init {
