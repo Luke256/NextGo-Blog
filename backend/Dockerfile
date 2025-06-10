@@ -1,5 +1,5 @@
 # Development Stage
-FROM golang:1.23-alpine AS development
+FROM golang:1.24-alpine AS development
 
 WORKDIR /app
 
